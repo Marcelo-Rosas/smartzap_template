@@ -74,6 +74,32 @@ export async function isWhatsAppConfigured(): Promise<boolean> {
 }
 
 /**
+ * Persist WhatsApp credentials to Redis (if available)
+ */
+export async function saveWhatsAppCredentials(credentials: WhatsAppCredentials): Promise<void> {
+  if (!isRedisAvailable() || !redis) return
+
+  try {
+    await redis.set(CREDENTIALS_KEY, JSON.stringify(credentials))
+  } catch (error) {
+    console.error('Error saving WhatsApp credentials to Redis:', error)
+  }
+}
+
+/**
+ * Delete WhatsApp credentials from Redis
+ */
+export async function deleteWhatsAppCredentials(): Promise<void> {
+  if (!isRedisAvailable() || !redis) return
+
+  try {
+    await redis.del(CREDENTIALS_KEY)
+  } catch (error) {
+    console.error('Error deleting WhatsApp credentials from Redis:', error)
+  }
+}
+
+/**
  * Get credentials source (for debugging/UI)
  */
 export async function getCredentialsSource(): Promise<'redis' | 'env' | 'none'> {

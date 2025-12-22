@@ -12,15 +12,19 @@ const TIER_LIMITS: Record<string, number> = {
 }
 
 // Shared logic to fetch limits from Meta API
-async function fetchLimitsFromMeta(phoneNumberId: string, accessToken: string) {
+async function fetchLimitsFromMeta(
+  phoneNumberId: string,
+  businessAccountId: string,
+  accessToken: string
+) {
   // Parallel fetch for throughput/quality and messaging tier
   const [throughputResponse, tierResponse] = await Promise.all([
     fetch(
-      `https://graph.facebook.com/v24.0/${phoneNumberId}?fields=throughput,quality_score`,
+      `https://graph.facebook.com/v24.0/${phoneNumberId}?fields=throughput,quality_rating,quality_score`,
       { headers: { 'Authorization': `Bearer ${accessToken}` } }
     ),
     fetch(
-      `https://graph.facebook.com/v24.0/${phoneNumberId}?fields=whatsapp_business_manager_messaging_limit`,
+      `https://graph.facebook.com/v24.0/${businessAccountId}?fields=whatsapp_business_manager_messaging_limit`,
       { headers: { 'Authorization': `Bearer ${accessToken}` } }
     ),
   ])
@@ -41,7 +45,9 @@ async function fetchLimitsFromMeta(phoneNumberId: string, accessToken: string) {
   const throughputLevel = throughputData.throughput?.level === 'high' ? 'HIGH' : 'STANDARD'
   
   // Parse quality score
-  const rawQuality = throughputData.quality_score?.score?.toUpperCase()
+  const rawQuality =
+    throughputData.quality_rating?.toUpperCase?.() ||
+    throughputData.quality_score?.score?.toUpperCase?.()
   const qualityScore = ['GREEN', 'YELLOW', 'RED'].includes(rawQuality) ? rawQuality : 'UNKNOWN'
   
   // Parse messaging tier
@@ -71,7 +77,7 @@ async function fetchLimitsFromMeta(phoneNumberId: string, accessToken: string) {
 export async function GET() {
   const credentials = await getWhatsAppCredentials()
   
-  if (!credentials?.phoneNumberId || !credentials?.accessToken) {
+  if (!credentials?.phoneNumberId || !credentials?.businessAccountId || !credentials?.accessToken) {
     return NextResponse.json({ 
       error: 'NO_CREDENTIALS',
       message: 'Credenciais do WhatsApp não configuradas. Configure em Ajustes.'
@@ -79,7 +85,11 @@ export async function GET() {
   }
 
   try {
-    const limits = await fetchLimitsFromMeta(credentials.phoneNumberId, credentials.accessToken)
+    const limits = await fetchLimitsFromMeta(
+      credentials.phoneNumberId,
+      credentials.businessAccountId,
+      credentials.accessToken
+    )
     return NextResponse.json(limits)
   } catch (error) {
     console.error('❌ Error fetching account limits:', error)
@@ -94,6 +104,7 @@ export async function GET() {
 // POST /api/account/limits - Fetch limits (with optional body credentials, fallback to Redis)
 export async function POST(request: NextRequest) {
   let phoneNumberId: string | undefined
+  let businessAccountId: string | undefined
   let accessToken: string | undefined
 
   // Try to get from request body first
@@ -102,6 +113,7 @@ export async function POST(request: NextRequest) {
     // Only use if they look like real credentials (not masked)
     if (body.phoneNumberId && body.accessToken && !body.accessToken.includes('***')) {
       phoneNumberId = body.phoneNumberId
+      businessAccountId = body.businessAccountId
       accessToken = body.accessToken
     }
   } catch {
@@ -109,15 +121,16 @@ export async function POST(request: NextRequest) {
   }
 
   // Fallback to Redis credentials if not provided
-  if (!phoneNumberId || !accessToken) {
+  if (!phoneNumberId || !businessAccountId || !accessToken) {
     const credentials = await getWhatsAppCredentials()
     if (credentials) {
       phoneNumberId = credentials.phoneNumberId
+      businessAccountId = credentials.businessAccountId
       accessToken = credentials.accessToken
     }
   }
 
-  if (!phoneNumberId || !accessToken) {
+  if (!phoneNumberId || !businessAccountId || !accessToken) {
     return NextResponse.json({ 
       error: 'NO_CREDENTIALS',
       message: 'Credenciais do WhatsApp não configuradas. Configure em Ajustes.'
@@ -125,7 +138,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const limits = await fetchLimitsFromMeta(phoneNumberId, accessToken)
+    const limits = await fetchLimitsFromMeta(phoneNumberId, businessAccountId, accessToken)
     return NextResponse.json(limits)
   } catch (error) {
     console.error('❌ Error fetching account limits:', error)

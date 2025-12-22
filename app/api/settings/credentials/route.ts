@@ -1,32 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// Credentials are stored in environment variables (secrets)
-// No Redis dependency - env vars are the source of truth
-
-interface WhatsAppCredentials {
-  phoneNumberId: string
-  businessAccountId: string
-  accessToken: string
-  displayPhoneNumber?: string
-  verifiedName?: string
-}
+import {
+  deleteWhatsAppCredentials,
+  getCredentialsSource,
+  getWhatsAppCredentials,
+  saveWhatsAppCredentials,
+  WhatsAppCredentials
+} from '@/lib/whatsapp-credentials'
 
 // GET - Fetch credentials from env (without exposing full token)
 export async function GET() {
   try {
-    const phoneNumberId = process.env.WHATSAPP_PHONE_ID
-    const businessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-    const accessToken = process.env.WHATSAPP_TOKEN
+    const credentials = await getWhatsAppCredentials()
 
-    if (phoneNumberId && businessAccountId && accessToken) {
+    if (credentials?.phoneNumberId && credentials?.businessAccountId && credentials?.accessToken) {
+      const credentialsSource = await getCredentialsSource()
       // Fetch display phone number from Meta API
-      let displayPhoneNumber: string | undefined
-      let verifiedName: string | undefined
+      let displayPhoneNumber: string | undefined = credentials.displayPhoneNumber
+      let verifiedName: string | undefined = credentials.verifiedName
 
       try {
         const metaResponse = await fetch(
-          `https://graph.facebook.com/v24.0/${phoneNumberId}?fields=display_phone_number,verified_name`,
-          { headers: { 'Authorization': `Bearer ${accessToken}` } }
+          `https://graph.facebook.com/v24.0/${credentials.phoneNumberId}?fields=display_phone_number,verified_name`,
+          { headers: { 'Authorization': `Bearer ${credentials.accessToken}` } }
         )
         if (metaResponse.ok) {
           const metaData = await metaResponse.json()
@@ -38,9 +33,9 @@ export async function GET() {
       }
 
       return NextResponse.json({
-        source: 'env',
-        phoneNumberId,
-        businessAccountId,
+        source: credentialsSource,
+        phoneNumberId: credentials.phoneNumberId,
+        businessAccountId: credentials.businessAccountId,
         displayPhoneNumber,
         verifiedName,
         hasToken: true,
@@ -67,7 +62,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { phoneNumberId, businessAccountId, accessToken } = body
+    const { phoneNumberId, businessAccountId, accessToken } = body as WhatsAppCredentials
 
     if (!phoneNumberId || !businessAccountId || !accessToken) {
       return NextResponse.json(
@@ -99,6 +94,15 @@ export async function POST(request: NextRequest) {
 
     const phoneData = await testResponse.json()
 
+    // Persist credentials to Redis for use by other API routes
+    await saveWhatsAppCredentials({
+      phoneNumberId,
+      businessAccountId,
+      accessToken,
+      displayPhoneNumber: phoneData.display_phone_number,
+      verifiedName: phoneData.verified_name,
+    })
+
     // Note: Credentials are stored in Vercel env vars via the setup wizard
     // This endpoint only validates them
     return NextResponse.json({
@@ -121,8 +125,14 @@ export async function POST(request: NextRequest) {
 
 // DELETE - No-op since credentials are in env vars
 export async function DELETE() {
-  return NextResponse.json({
-    success: true,
-    message: 'To remove credentials, update environment variables in Vercel dashboard.'
-  })
+  try {
+    await deleteWhatsAppCredentials()
+    return NextResponse.json({
+      success: true,
+      message: 'Credentials removed from Redis cache. Update environment variables in Vercel to fully disconnect.'
+    })
+  } catch (error) {
+    console.error('Error deleting credentials:', error)
+    return NextResponse.json({ error: 'Failed to delete credentials' }, { status: 500 })
+  }
 }
