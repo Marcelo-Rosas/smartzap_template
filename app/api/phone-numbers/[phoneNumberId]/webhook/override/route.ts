@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getWhatsAppCredentials } from '@/lib/whatsapp-credentials';
-import { redis, isRedisAvailable } from '@/lib/redis';
+import { settingsDb } from '@/lib/supabase-db';
 
 const META_API_VERSION = 'v21.0';
 const META_API_BASE = `https://graph.facebook.com/${META_API_VERSION}`;
@@ -9,19 +9,26 @@ interface RouteContext {
   params: Promise<{ phoneNumberId: string }>;
 }
 
-// Get verify token from Redis (same logic as webhook endpoint)
+// Get or generate webhook verify token (Supabase settings preferred, env var fallback)
 async function getVerifyToken(): Promise<string> {
-  if (isRedisAvailable() && redis) {
-    const storedToken = await redis.get('webhook:verify_token');
+  try {
+    const storedToken = await settingsDb.get('webhook_verify_token');
     if (storedToken) {
-      return storedToken as string;
+      return storedToken;
     }
-    // Generate new UUID token and store in Redis
+
     const newToken = crypto.randomUUID();
-    await redis.set('webhook:verify_token', newToken);
+    await settingsDb.set('webhook_verify_token', newToken);
     return newToken;
+  } catch {
+    if (process.env.WEBHOOK_VERIFY_TOKEN) {
+      return process.env.WEBHOOK_VERIFY_TOKEN.trim();
+    }
+    if (process.env.WHATSAPP_VERIFY_TOKEN) {
+      return process.env.WHATSAPP_VERIFY_TOKEN.trim();
+    }
+    return 'not-configured';
   }
-  return process.env.WEBHOOK_VERIFY_TOKEN || 'smartzap_verify_token';
 }
 
 /**
@@ -69,8 +76,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // Get verify token from Redis (ensures consistency with webhook endpoint)
-    const verifyTokenFromRedis = await getVerifyToken();
+    // Use the same verify token as the main webhook endpoint
+    const verifyToken = await getVerifyToken();
 
     // Call Meta API to set webhook override on phone number
     // Reference: https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks/override
@@ -85,7 +92,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         body: JSON.stringify({
           webhook_configuration: {
             override_callback_uri: callbackUrl,
-            verify_token: verifyTokenFromRedis,
+            verify_token: verifyToken,
           },
         }),
       }

@@ -206,29 +206,44 @@ async function validateWhatsApp(credentials: Record<string, string>) {
   }
 
   try {
-    // Test WhatsApp by getting phone number info
-    const response = await fetch(
-      `https://graph.facebook.com/v21.0/${phoneId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      }
+    // 1) Validate phone number id (PHONE_NUMBER_ID)
+    const phoneRes = await fetch(
+      `https://graph.facebook.com/v24.0/${phoneId}?fields=display_phone_number,verified_name,quality_rating`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
     )
 
-    if (!response.ok) {
-      const error = await response.json()
-      return NextResponse.json({
-        valid: false,
-        error: error.error?.message || 'Token ou Phone ID inválido'
-      })
+    if (!phoneRes.ok) {
+      const error = await phoneRes.json().catch(() => ({}))
+      const message = error?.error?.message || 'Token ou Phone ID inválido'
+
+      // Friendly hint when user swapped IDs
+      if (typeof message === 'string' && message.includes('Tried accessing nonexisting field') && message.includes('WhatsAppBusinessAccount')) {
+        return NextResponse.json({
+          valid: false,
+          error: 'IDs parecem estar trocados: no campo Phone Number ID você colocou o Business Account ID (WABA).'
+        })
+      }
+
+      return NextResponse.json({ valid: false, error: message })
     }
 
-    const data = await response.json()
+    const phoneData = await phoneRes.json()
+
+    // 2) Validate business account id (WABA) can list phone numbers
+    const businessRes = await fetch(
+      `https://graph.facebook.com/v24.0/${businessId}/phone_numbers?fields=id&limit=1`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    )
+
+    if (!businessRes.ok) {
+      const error = await businessRes.json().catch(() => ({}))
+      const message = error?.error?.message || 'Business Account ID inválido'
+      return NextResponse.json({ valid: false, error: message })
+    }
 
     return NextResponse.json({
       valid: true,
-      message: `WhatsApp OK! (${data.verified_name || data.display_phone_number || 'Conectado'})`
+      message: `WhatsApp OK! (${phoneData.verified_name || phoneData.display_phone_number || 'Conectado'})`
     })
   } catch (error) {
     console.error('WhatsApp validation error:', error)
