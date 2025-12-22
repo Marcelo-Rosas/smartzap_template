@@ -36,7 +36,9 @@ async function validateApiKey(provider: string, apiKey: string): Promise<{ valid
         await generateText({
             model,
             prompt: 'Hi',
-            maxOutputTokens: 5,
+            // Some providers enforce a minimum output token limit (e.g. >= 16)
+            // Keep this low but valid to avoid false "invalid key" errors.
+            maxOutputTokens: 16,
         })
 
         return { valid: true }

@@ -20,11 +20,8 @@ const nextConfig: NextConfig = {
   // React Compiler for automatic memoization (moved from experimental in Next.js 16)
   reactCompiler: true,
 
-  // Turbopack config
-  turbopack: {
-    // Set the workspace root to this directory
-    root: __dirname,
-  },
+  // Turbopack is enabled by default in Next.js 16
+  // No additional config needed
 
   // Image optimization
   images: {
