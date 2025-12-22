@@ -1,0 +1,24 @@
+[dotenv@17.2.3] injecting env (22) from .env.local -- tip: ÔÜÖ´©Å  suppress all logs with { quiet: true }
+­ƒÜÇ Testing WhatsApp Sending...
+­ƒô▒ From ID: 890378294161253
+­ƒô® To: 5521975602969
+­ƒôñ Sending payload: {
+  "messaging_product": "whatsapp",
+  "to": "5521975602969",
+  "type": "template",
+  "template": {
+    "name": "hello_world",
+    "language": {
+      "code": "en_US"
+    }
+  }
+}
+ÔØî Error sending message:
+{
+  "error": {
+    "message": "(#133010) Account not registered",
+    "type": "OAuthException",
+    "code": 133010,
+    "fbtrace_id": "AJs2WDL9o8MUNoMViHsLKoL"
+  }
+}
