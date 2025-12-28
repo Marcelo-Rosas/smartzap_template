@@ -5,7 +5,7 @@
  * Polls every 2 seconds while campaign is SENDING, stops when complete.
  */
 
-import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
+import { useEffect, useCallback, useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { campaignService } from '../services';
 import { Campaign, CampaignStatus } from '../types';
@@ -30,7 +30,6 @@ export const useRealtimeStatus = (
 ) => {
   const { interval = 2000, enabled = true } = options;
   const queryClient = useQueryClient();
-  const pollCountRef = useRef(0);
   const [pollCount, setPollCount] = useState(0);
 
   // Main campaign query
@@ -88,9 +87,8 @@ export const useRealtimeStatus = (
       // Invalidate queries to reflect new data
       queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      
-      pollCountRef.current++;
-      setPollCount(pollCountRef.current);
+
+      setPollCount((prev) => prev + 1);
     } catch (error) {
       console.error('Failed to update campaign stats:', error);
     }
