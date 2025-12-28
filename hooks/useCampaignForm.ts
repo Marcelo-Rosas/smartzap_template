@@ -70,7 +70,6 @@ export const useCampaignStep3Form = (defaultValues?: Partial<CampaignStep3Form>)
  */
 export const useCampaignFormComplete = (defaultValues?: Partial<CampaignForm>) => {
   const form = useForm<CampaignForm>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(campaignFormSchema) as any,
     mode: 'onBlur',
     reValidateMode: 'onChange',

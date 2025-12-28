@@ -50,7 +50,6 @@ export function subscribeToTable<T extends Record<string, unknown> = Record<stri
         ...(filter && { filter }),
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return channel.on('postgres_changes' as any, config as any, (payload: any) => {
         callback(payload as RealtimePayload<T>)
     })

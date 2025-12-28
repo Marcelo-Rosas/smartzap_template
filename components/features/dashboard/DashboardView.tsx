@@ -76,32 +76,30 @@ const StatusBadge = ({ status }: { status: CampaignStatus }) => {
   );
 };
 
+const StatSkeleton = () => (
+  <div className="glass-panel p-6 rounded-2xl animate-pulse">
+    <div className="flex items-start justify-between mb-6">
+      <div className="w-12 h-12 rounded-xl bg-zinc-700/50" />
+      <div className="w-16 h-6 rounded-full bg-zinc-700/50" />
+    </div>
+    <div>
+      <div className="w-20 h-9 bg-zinc-700/50 rounded mb-2" />
+      <div className="w-28 h-4 bg-zinc-700/50 rounded" />
+    </div>
+  </div>
+);
+
+const CampaignSkeleton = () => (
+  <div className="flex items-center justify-between py-4 px-4 animate-pulse">
+    <div className="flex-1">
+      <div className="w-40 h-5 bg-zinc-700/50 rounded mb-2" />
+      <div className="w-24 h-3 bg-zinc-700/50 rounded" />
+    </div>
+    <div className="w-20 h-6 bg-zinc-700/50 rounded-full" />
+  </div>
+);
+
 export const DashboardView: React.FC<DashboardViewProps> = ({ stats, recentCampaigns, isLoading }) => {
-  // Skeleton loader for stats cards
-  const StatSkeleton = () => (
-    <div className="glass-panel p-6 rounded-2xl animate-pulse">
-      <div className="flex items-start justify-between mb-6">
-        <div className="w-12 h-12 rounded-xl bg-zinc-700/50" />
-        <div className="w-16 h-6 rounded-full bg-zinc-700/50" />
-      </div>
-      <div>
-        <div className="w-20 h-9 bg-zinc-700/50 rounded mb-2" />
-        <div className="w-28 h-4 bg-zinc-700/50 rounded" />
-      </div>
-    </div>
-  );
-
-  // Skeleton loader for campaign rows
-  const CampaignSkeleton = () => (
-    <div className="flex items-center justify-between py-4 px-4 animate-pulse">
-      <div className="flex-1">
-        <div className="w-40 h-5 bg-zinc-700/50 rounded mb-2" />
-        <div className="w-24 h-3 bg-zinc-700/50 rounded" />
-      </div>
-      <div className="w-20 h-6 bg-zinc-700/50 rounded-full" />
-    </div>
-  );
-
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">

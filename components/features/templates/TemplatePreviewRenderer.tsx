@@ -1,6 +1,6 @@
 import React from 'react';
 import { TemplateComponent, TemplateButton } from '../../../types';
-import { Zap, ExternalLink, Phone, Copy, Image, Video, FileText, MessageCircle } from 'lucide-react';
+import { Zap, ExternalLink, Phone, Copy, Image as ImageIcon, Video, FileText, MessageCircle } from 'lucide-react';
 
 interface TemplatePreviewRendererProps {
     components?: TemplateComponent[];
@@ -77,7 +77,7 @@ export const TemplatePreviewRenderer: React.FC<TemplatePreviewRendererProps> = (
                 return (
                     <div className="bg-[#202c33] rounded-lg rounded-tl-none shadow-sm mb-1 overflow-hidden">
                         <div className="bg-zinc-700/50 h-32 flex items-center justify-center">
-                            <Image size={32} className="text-zinc-500" />
+                            <ImageIcon size={32} className="text-zinc-500" />
                         </div>
                     </div>
                 );

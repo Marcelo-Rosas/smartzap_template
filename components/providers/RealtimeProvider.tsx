@@ -99,10 +99,13 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
     // Initial connection
     useEffect(() => {
         mountedRef.current = true
-        connect()
+        const id = setTimeout(() => {
+            connect()
+        }, 0)
 
         return () => {
             mountedRef.current = false
+            clearTimeout(id)
             if (channelRef.current) {
                 removeChannel(channelRef.current)
                 channelRef.current = null

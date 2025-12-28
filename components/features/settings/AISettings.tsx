@@ -88,7 +88,7 @@ export const AISettings: React.FC<AISettingsProps> = ({
             // Clear any error message when switching providers
             setErrorMessage(null);
         }
-    }, [selectedProvider, hasInitialized]);
+    }, [selectedProvider, hasInitialized, selectedModel]);
 
     const handleSave = async () => {
         if (isEditing && !apiKey.trim()) {

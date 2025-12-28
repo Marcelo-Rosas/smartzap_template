@@ -859,7 +859,7 @@ function WizardContent() {
                         className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono text-sm"
                       />
                       <div className="absolute -bottom-5 left-0 text-[10px] text-zinc-500">
-                        Use o "Connection Pooler" (porta 6543) para melhor compatibilidade
+                        Use o &quot;Connection Pooler&quot; (porta 6543) para melhor compatibilidade
                       </div>
                     </div>
 

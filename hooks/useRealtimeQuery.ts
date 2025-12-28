@@ -97,16 +97,27 @@ export function useRealtimeQuery<TData = unknown, TError = Error>({
         ...queryOptions,
     })
 
-    // Debounced invalidation
-    const debouncedInvalidate = useMemo(
-        () =>
-            debounce(() => {
-                if (mountedRef.current) {
-                    queryClient.invalidateQueries({ queryKey })
-                }
-            }, debounceMs),
-        [queryClient, queryKey, debounceMs]
-    )
+  // Stable keys for deps (avoid spreading arrays/objects in dependency arrays)
+  const eventsKey = useMemo(() => events.join(','), [events])
+  const queryKeyString = useMemo(
+    () => (Array.isArray(queryKey) ? JSON.stringify(queryKey) : String(queryKey)),
+    [queryKey]
+  )
+  const eventsList = useMemo(() => events, [events])
+
+    // Debounced invalidation (created outside of render to avoid ref access during render)
+    const debouncedInvalidateRef = useRef<ReturnType<typeof debounce> | null>(null)
+    useEffect(() => {
+        debouncedInvalidateRef.current?.cancel?.()
+        debouncedInvalidateRef.current = debounce(() => {
+            if (mountedRef.current) {
+                queryClient.invalidateQueries({ queryKey })
+            }
+        }, debounceMs)
+        return () => {
+            debouncedInvalidateRef.current?.cancel?.()
+        }
+    }, [queryClient, queryKey, debounceMs])
 
     // Handler for Realtime events
     const handleRealtimeEvent = useCallback(
@@ -118,10 +129,10 @@ export function useRealtimeQuery<TData = unknown, TError = Error>({
                 onRealtimeUpdate(payload, queryClient)
             } else {
                 // Default: invalidate query (triggers refetch)
-                debouncedInvalidate()
+                debouncedInvalidateRef.current?.()
             }
         },
-        [onRealtimeUpdate, queryClient, debouncedInvalidate]
+        [onRealtimeUpdate, queryClient]
     )
 
     // Setup Realtime subscription
@@ -129,7 +140,7 @@ export function useRealtimeQuery<TData = unknown, TError = Error>({
         mountedRef.current = true
 
         // Create unique channel name
-        const channelName = `rq-${table}-${Array.isArray(queryKey) ? queryKey.join('-') : queryKey}-${Date.now()}`
+    const channelName = `rq-${table}-${queryKeyString}-${Date.now()}`
         const channel = createRealtimeChannel(channelName)
 
         // Skip if Supabase not configured
@@ -141,7 +152,7 @@ export function useRealtimeQuery<TData = unknown, TError = Error>({
         channelRef.current = channel
 
         // Subscribe to each event type
-        events.forEach((event) => {
+    eventsList.forEach((event) => {
             subscribeToTable(channel, table, event, handleRealtimeEvent, filter)
         })
 
@@ -153,14 +164,14 @@ export function useRealtimeQuery<TData = unknown, TError = Error>({
         // Cleanup
         return () => {
             mountedRef.current = false
-            debouncedInvalidate.cancel?.()
+            debouncedInvalidateRef.current?.cancel?.()
 
             if (channelRef.current) {
                 removeChannel(channelRef.current)
                 channelRef.current = null
             }
         }
-    }, [table, filter, events.join(','), handleRealtimeEvent])
+  }, [table, filter, handleRealtimeEvent, eventsKey, queryKeyString, eventsList])
 
     return query
 }

@@ -385,7 +385,7 @@ const OnboardingOverlay = ({
                                 Complete os passos acima na ordem para liberar o acesso ao sistema.
                             </p>
                             <p className="text-gray-500 text-xs mt-2">
-                                Após configurar cada serviço no Vercel, clique em "Verificar novamente".
+                                Após configurar cada serviço no Vercel, clique em &quot;Verificar novamente&quot;.
                             </p>
                         </div>
                     )

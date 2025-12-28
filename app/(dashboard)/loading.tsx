@@ -1,5 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton"
 
+const CHART_BAR_HEIGHTS = [20, 55, 38, 72, 45, 60, 30, 80, 50, 65, 40, 70]
+
 export default function DashboardLoading() {
     return (
         <div className="space-y-6">
@@ -35,7 +37,11 @@ export default function DashboardLoading() {
                     </div>
                     <div className="flex items-end gap-2 h-[250px] pt-8">
                         {Array.from({ length: 12 }).map((_, i) => (
-                            <Skeleton key={i} className="flex-1 h-full opacity-20" style={{ height: `${Math.random() * 100}%` }} />
+                            <Skeleton
+                                key={i}
+                                className="flex-1 h-full opacity-20"
+                                style={{ height: `${CHART_BAR_HEIGHTS[i % CHART_BAR_HEIGHTS.length]}%` }}
+                            />
                         ))}
                     </div>
                 </div>

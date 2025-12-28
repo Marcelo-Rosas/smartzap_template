@@ -329,12 +329,10 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
  * const schema = z.object({ name: z.string().min(3) });
  * const form = useTypedForm(schema, { defaultValues: { name: '' } });
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useTypedForm<T extends FieldValues>(
   schema: z.ZodType<T, any, any>,
   options?: Omit<Parameters<typeof useForm<T>>[0], 'resolver'>
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<T>({
     resolver: zodResolver(schema) as any,
     mode: 'onBlur', // Validate on blur for better UX
@@ -350,7 +348,6 @@ export function useTypedForm<T extends FieldValues>(
 // ============================================
 
 interface FormContextValue<T extends FieldValues = FieldValues> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   form: UseFormReturn<T, any, any>;
 }
 
@@ -365,7 +362,6 @@ export function useFormContext<T extends FieldValues>() {
 }
 
 interface FormProviderProps<T extends FieldValues> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   form: UseFormReturn<T, any, any>;
   children: React.ReactNode;
   onSubmit: (data: T) => void | Promise<void>;
@@ -379,7 +375,6 @@ export function FormProvider<T extends FieldValues>({
   className = '',
 }: FormProviderProps<T>) {
   return (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <FormContext.Provider value={{ form: form as any }}>
       <form 
         onSubmit={form.handleSubmit(onSubmit)} 

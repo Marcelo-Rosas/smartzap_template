@@ -255,7 +255,7 @@ export const SetupWizardView: React.FC<SetupWizardViewProps> = ({
             Complete os passos acima para liberar as configurações do WhatsApp.
           </p>
           <p className="text-gray-500 text-xs mt-2">
-            Após adicionar Upstash no Vercel, clique em "Verificar novamente" para atualizar.
+            Após adicionar Upstash no Vercel, clique em &quot;Verificar novamente&quot; para atualizar.
           </p>
         </div>
       )}

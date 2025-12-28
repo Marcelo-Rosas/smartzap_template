@@ -64,12 +64,10 @@ export const BulkGenerationModal: React.FC<BulkGenerationModalProps> = ({
     submitLabel = 'Submeter Lote',
     submitIcon = <Zap size={16} />
 }) => {
-    if (!isOpen) return null;
-
     const hasTemplates = generatedTemplates.length > 0;
 
     // Detect if selected templates have URL or PHONE buttons
-    const buttonAnalysis = useMemo(() => {
+    const buttonAnalysis = (() => {
         const selectedList = generatedTemplates.filter(t => selectedTemplates.has(t.id));
         let hasUrlButtons = false;
         let hasPhoneButtons = false;
@@ -92,7 +90,9 @@ export const BulkGenerationModal: React.FC<BulkGenerationModalProps> = ({
         }
 
         return { hasUrlButtons, hasPhoneButtons, urlButtonCount, phoneButtonCount };
-    }, [generatedTemplates, selectedTemplates]);
+    })();
+
+    if (!isOpen) return null;
 
     // Validation: can submit only if required fields are filled
     const isUrlValid = !buttonAnalysis.hasUrlButtons || (universalUrl.startsWith('http://') || universalUrl.startsWith('https://'));
@@ -357,7 +357,7 @@ export const BulkGenerationModal: React.FC<BulkGenerationModalProps> = ({
                     {!hasTemplates ? (
                         <>
                             <div className="text-xs text-zinc-500 italic hidden sm:block">
-                                Ex: "Promoção de relâmpago" (min. 10 caracteres)
+                                Ex: &quot;Promoção de relâmpago&quot; (min. 10 caracteres)
                             </div>
                             <button
                                 onClick={onGenerate}

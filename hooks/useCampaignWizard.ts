@@ -61,7 +61,7 @@ export const useCampaignWizardController = () => {
       const date = new Date().toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' });
       setName(`Campanha ${date}`);
     }
-  }, []);
+  }, [name]);
 
   // Update selected contact IDs when switching to "all"
   useEffect(() => {

@@ -60,7 +60,7 @@ export function StrategySelectorModal({ isOpen, onSelect, onClose }: StrategySel
                 <DialogHeader>
                     <DialogTitle className="text-2xl text-center">Como você deseja criar seus templates? 🤖</DialogTitle>
                     <DialogDescription className="text-center text-lg">
-                        Escolha a "personalidade" da IA para este projeto.
+                        Escolha a &quot;personalidade&quot; da IA para este projeto.
                     </DialogDescription>
                 </DialogHeader>
 
