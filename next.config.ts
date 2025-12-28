@@ -5,14 +5,6 @@ const nextConfig: NextConfig = {
 
   reactStrictMode: true,
 
-  eslint: {
-    // Force Next lint to run only on valid source folders (prevents it from trying /lint)
-    dirs: ['app', 'components', 'lib'],
-  },
-
-  // Standalone output for Docker
-  output: 'standalone',
-
   // Include SQL migration files in the serverless bundle
   outputFileTracingIncludes: {
     '/api/setup/migrate': ['./lib/migrations/**/*'],
