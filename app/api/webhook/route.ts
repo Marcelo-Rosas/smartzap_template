@@ -48,6 +48,9 @@ async function getVerifyToken(): Promise<string> {
     if (process.env.WEBHOOK_VERIFY_TOKEN) {
       return process.env.WEBHOOK_VERIFY_TOKEN.trim()
     }
+    if (process.env.WHATSAPP_VERIFY_TOKEN) {
+      return process.env.WHATSAPP_VERIFY_TOKEN.trim()
+    }
     return 'not-configured'
   }
 }

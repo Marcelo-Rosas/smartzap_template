@@ -14,9 +14,9 @@ interface WhatsAppCredentials {
 // GET - Fetch credentials from env (without exposing full token)
 export async function GET() {
   try {
-    const phoneNumberId = process.env.WHATSAPP_PHONE_ID
-    const businessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-    const accessToken = process.env.WHATSAPP_TOKEN
+    const phoneNumberId = process.env.WHATSAPP_PHONE_ID?.trim()
+    const businessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID?.trim()
+    const accessToken = process.env.WHATSAPP_TOKEN?.trim()
 
     if (phoneNumberId && businessAccountId && accessToken) {
       // Fetch display phone number from Meta API
@@ -67,7 +67,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { phoneNumberId, businessAccountId, accessToken } = body
+    const phoneNumberId = typeof body?.phoneNumberId === 'string' ? body.phoneNumberId.trim() : ''
+    const businessAccountId = typeof body?.businessAccountId === 'string' ? body.businessAccountId.trim() : ''
+    const accessToken = typeof body?.accessToken === 'string' ? body.accessToken.trim() : ''
 
     if (!phoneNumberId || !businessAccountId || !accessToken) {
       return NextResponse.json(
@@ -76,28 +78,55 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate token by making a test call to Meta API
-    const testResponse = await fetch(
+    // Validate PHONE_NUMBER_ID (must be a WhatsApp phone number node)
+    const phoneResponse = await fetch(
       `https://graph.facebook.com/v24.0/${phoneNumberId}?fields=display_phone_number,verified_name,quality_rating`,
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      }
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
     )
 
-    if (!testResponse.ok) {
-      const error = await testResponse.json()
+    if (!phoneResponse.ok) {
+      const error = await phoneResponse.json().catch(() => ({}))
+      const message = error?.error?.message || 'Unknown error'
+
+      // Common pitfall: user pasted Business Account ID into Phone Number ID
+      if (typeof message === 'string' && message.includes('Tried accessing nonexisting field') && message.includes('WhatsAppBusinessAccount')) {
+        return NextResponse.json(
+          {
+            error: 'IDs do WhatsApp parecem estar trocados',
+            details: 'Você colocou o WhatsApp Business Account ID no campo Phone Number ID. O Phone Number ID é o ID do número (phone_number_id), não o WABA.',
+          },
+          { status: 400 }
+        )
+      }
+
       return NextResponse.json(
         {
-          error: 'Invalid credentials - Meta API rejected the token',
-          details: error.error?.message || 'Unknown error'
+          error: 'Credenciais inválidas - Meta API rejeitou a validação do Phone Number ID',
+          details: message,
         },
         { status: 401 }
       )
     }
 
-    const phoneData = await testResponse.json()
+    const phoneData = await phoneResponse.json()
+
+    // Validate BUSINESS_ACCOUNT_ID (must be a WhatsApp Business Account node)
+    const businessResponse = await fetch(
+      `https://graph.facebook.com/v24.0/${businessAccountId}/phone_numbers?fields=id&limit=1`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    )
+
+    if (!businessResponse.ok) {
+      const error = await businessResponse.json().catch(() => ({}))
+      const message = error?.error?.message || 'Unknown error'
+      return NextResponse.json(
+        {
+          error: 'Credenciais inválidas - Meta API rejeitou a validação do Business Account ID',
+          details: message,
+        },
+        { status: 401 }
+      )
+    }
 
     // Note: Credentials are stored in Vercel env vars via the setup wizard
     // This endpoint only validates them
