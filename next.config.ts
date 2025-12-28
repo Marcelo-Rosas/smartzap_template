@@ -2,7 +2,13 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   // Next.js 16 uses Turbopack by default
+
   reactStrictMode: true,
+
+  eslint: {
+    // Force Next lint to run only on valid source folders (prevents it from trying /lint)
+    dirs: ['app', 'components', 'lib'],
+  },
 
   // Standalone output for Docker
   output: 'standalone',
