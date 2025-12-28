@@ -58,16 +58,12 @@ export function useCampaignRealtime({
   // Debounce time based on campaign size
   const debounceTime = useMemo(() => getDebounceTime(recipients), [recipients])
 
-  // Check if within post-completion window (5 minutes)
-  const [isWithinPostCompletionWindow, setIsWithinPostCompletionWindow] = useState(true)
-  useEffect(() => {
-    if (!completedAt) {
-      setTimeout(() => setIsWithinPostCompletionWindow(true), 0)
-      return
-    }
+  // Check if within post-completion window (5 minutes) - compute synchronously
+  const isWithinPostCompletionWindow = useMemo(() => {
+    if (!completedAt) return true
     const completedTime = new Date(completedAt).getTime()
     const elapsed = Date.now() - completedTime
-    setTimeout(() => setIsWithinPostCompletionWindow(elapsed < POST_COMPLETION_TIMEOUT_MS), 0)
+    return elapsed < POST_COMPLETION_TIMEOUT_MS
   }, [completedAt])
 
   // Large campaigns (>= 10k) use polling only (saves Supabase Realtime events)
@@ -152,7 +148,7 @@ export function useCampaignRealtime({
     if (remaining <= 0) {
       // Already past the window
       console.log('[CampaignRealtime] Post-completion window already expired')
-      setTimeout(() => setHasTimedOut(true), 0)
+      setHasTimedOut(true)
       return
     }
 
@@ -174,7 +170,7 @@ export function useCampaignRealtime({
         console.log('[CampaignRealtime] Disconnecting...')
         removeChannel(channelRef.current)
         channelRef.current = null
-        setTimeout(() => setIsActuallyConnected(false), 0)
+        setIsActuallyConnected(false)
       }
       return
     }
@@ -217,7 +213,7 @@ export function useCampaignRealtime({
         console.log(`[CampaignRealtime] Cleanup: Disconnecting`)
         removeChannel(channelRef.current)
         channelRef.current = null
-        setTimeout(() => setIsActuallyConnected(false), 0)
+        setIsActuallyConnected(false)
       }
     }
   }, [shouldConnect, campaignId, debounceTime, handleCampaignUpdate, handleContactUpdate])
