@@ -7,7 +7,11 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+
     "lint": "next lint",
+    "lint:ci": "next lint",
+    "lint:fix": "next lint --fix",
+
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
@@ -16,6 +20,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report",
     "test:all": "npm run test && npm run test:e2e",
+
     "db:migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
