@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import '@testing-library/jest-dom/vitest'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import WizardPage from '@/app/(auth)/setup/wizard/page'
 import { renderWithProviders } from './utils/render-with-providers'
 import { setupWizardFixture } from './fixtures/setup-data'
@@ -90,5 +90,54 @@ describe('Setup Wizard', () => {
     expect(await screen.findByRole('heading', { name: 'Supabase Database' })).toBeInTheDocument()
     expect(await screen.findByDisplayValue('https://env.supabase.co')).toBeInTheDocument()
     expect(screen.getByDisplayValue('anon-from-env')).toBeInTheDocument()
+  })
+
+  it('exibe erro quando o Phone Number ID está ausente', async () => {
+    localStorage.setItem('setup_token', 'token-123')
+    localStorage.setItem('setup_project', JSON.stringify({ id: 'proj-3', name: 'Projeto 3' }))
+    localStorage.setItem('smartzap_setup_step', '4')
+    localStorage.setItem(
+      'smartzap_setup_data',
+      JSON.stringify({ whatsappToken: setupWizardFixture.whatsappToken })
+    )
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ envs: [] }),
+    })
+
+    renderWithProviders(<WizardPage />)
+
+    expect(await screen.findByRole('heading', { name: 'WhatsApp Cloud API' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+
+    expect(await screen.findByText('Phone Number ID é obrigatório')).toBeInTheDocument()
+  })
+
+  it('exibe erro quando o Business Account ID está ausente', async () => {
+    localStorage.setItem('setup_token', 'token-123')
+    localStorage.setItem('setup_project', JSON.stringify({ id: 'proj-4', name: 'Projeto 4' }))
+    localStorage.setItem('smartzap_setup_step', '4')
+    localStorage.setItem(
+      'smartzap_setup_data',
+      JSON.stringify({
+        whatsappToken: setupWizardFixture.whatsappToken,
+        whatsappPhoneId: setupWizardFixture.whatsappPhoneId,
+      })
+    )
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ envs: [] }),
+    })
+
+    renderWithProviders(<WizardPage />)
+
+    expect(await screen.findByRole('heading', { name: 'WhatsApp Cloud API' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+
+    expect(await screen.findByText('Business Account ID é obrigatório')).toBeInTheDocument()
   })
 })
