@@ -1,8 +1,21 @@
-import { supabase } from '@/lib/supabase'
+import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { DashboardStats, ChartDataPoint } from '@/services/dashboardService'
 import { getCampaignsServer } from './campaigns'
 
 export async function getDashboardStatsServer(): Promise<{ stats: DashboardStats, recentCampaigns: any[] }> {
+    if (!isSupabaseConfigured()) {
+        return {
+            stats: {
+                sent24h: '0',
+                deliveryRate: '0%',
+                activeCampaigns: '0',
+                failedMessages: '0',
+                chartData: []
+            },
+            recentCampaigns: []
+        }
+    }
+
     // Parallel fetch stats source data and campaigns
     const [statsData, campaigns] = await Promise.all([
         supabase.from('campaigns').select('sent, delivered, read, failed, status'),
